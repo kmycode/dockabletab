@@ -66,6 +66,7 @@ public class DockableAreaGroupPane extends SplitPane {
 	DockableAreaGroupPane (DockableAreaGroupPane parent, Orientation orientation) {
 		this.parent = parent;
 		this.rootPane = parent.getRootPane();
+		this.rootParent = parent.rootParent;
 		this.setOrientation(orientation);
 		this.setChildPane();
 	}
@@ -97,11 +98,11 @@ public class DockableAreaGroupPane extends SplitPane {
 		return this.childPane == null ? this.getItems() : this.childPane.getItems();
 	}
 
-	private DockableAreaGroupPane getChildArea () {
+	DockableAreaGroupPane getChildArea () {
 		return this.childPane == null ? this : this.childPane;
 	}
 
-	private DockableAreaGroupPane getParentArea () {
+	DockableAreaGroupPane getParentArea () {
 		return this.childPane != null ? this : this.parent;
 	}
 
@@ -118,15 +119,18 @@ public class DockableAreaGroupPane extends SplitPane {
 	// コンストラクタ内でのthisリークを防ぐ
 	// rootPaneを利用するときは、必ずこのメソッドを経由すること
 	DockableAreaGroupPane getRootPane () {
+		/*
 		 if (this.rootPane == null) {
 			this.rootPane = this;
 		}
 		 // 古いルートの上に、新しいルートが設定された場合を想定
-		else if (this.rootPane != this && this.rootPane.getRootPane() != this.rootPane) {
+		else if (this.rootPane != this) {
 			this.rootPane = this.rootPane.getRootPane();
 		}
+		 */
 		//this.rootPane = this.parent != null ? this.parent.getRootPane() : this;
-		return this.rootPane;
+		//return this.rootPane;
+		return this.rootParent.rootGroupProperty().get();
 	}
 
 	// 親パネルを設定
@@ -159,6 +163,7 @@ public class DockableAreaGroupPane extends SplitPane {
 	// 指定したタブパネルを末尾に追加する
 	public void add (DockableTabPane pane) {
 		this.getTabPaneItems().add(pane);
+		pane.setParent(this);
 	}
 
 	// 指定したタブを、指定した方向へ移動する。ドッキングになるか、他のタブパネルへの移動になるかはこのメソッドで決まる
@@ -170,18 +175,20 @@ public class DockableAreaGroupPane extends SplitPane {
 			tabPane.getTabs().add(tab);
 			if (this.getOrientation() == Orientation.VERTICAL) {
 				if (direction == DockingDirection.BOTTOM) {
-						this.add(tabPane);
+					this.add(tabPane);
 				}
 				else if (direction == DockingDirection.TOP) {
-						this.add(0, tabPane);
+					this.add(0, tabPane);
 				}
 			}
 			else if (this.getOrientation() == Orientation.HORIZONTAL) {
+				DockableAreaGroupPane groupPane = new DockableAreaGroupPane(this, Orientation.VERTICAL);
+				groupPane.add(tabPane);
 				if (direction == DockingDirection.RIGHT) {
-					this.getParentArea().getItems().add(tabPane);
+					this.getParentArea().getItems().add(groupPane);
 				}
 				else if (direction == DockingDirection.LEFT) {
-					this.getParentArea().getItems().add(0, tabPane);
+					this.getParentArea().getItems().add(0, groupPane);
 				}
 			}
 		}
@@ -191,7 +198,12 @@ public class DockableAreaGroupPane extends SplitPane {
 		else if (direction == DockingDirection.OVER_BOTTOM) {
 			DockableTabPane tabPane = new DockableTabPane(this);
 			tabPane.getTabs().add(tab);
-			this.getTabPaneItems().add(tabPane);
+			this.getOverTabPane().getParentPane().getTabPaneItems().add(tabPane);
+		}
+		else if (direction == DockingDirection.OVER_TOP) {
+			DockableTabPane tabPane = new DockableTabPane(this);
+			tabPane.getTabs().add(tab);
+			this.getOverTabPane().getParentPane().getTabPaneItems().add(0, tabPane);
 		}
 		this.getRootPane().removeEmptyTabPane();
 	}
@@ -214,7 +226,7 @@ public class DockableAreaGroupPane extends SplitPane {
 	}
 
 	private void getTabPaneList (List<DockableTabPane> result) {
-		for (Node node : this.getTabPaneItems()) {
+		for (Node node : this.getItems()) {
 			if (node instanceof DockableTabPane) {
 				result.add((DockableTabPane) node);
 			}
@@ -299,7 +311,7 @@ public class DockableAreaGroupPane extends SplitPane {
 		}
 		// Over
 		else {
-			List<DockableTabPane> tabPaneList = this.getTabPaneList();
+			List<DockableTabPane> tabPaneList = this.rootParent.rootGroupProperty().get().getTabPaneList();
 			for (DockableTabPane tabPane : tabPaneList) {
 				Rectangle rect = tabPane.getLocalRectangle();
 				if (localMouseX > rect.x && localMouseX < rect.x + rect.width && localMouseY > rect.y && localMouseY

@@ -19,18 +19,21 @@ public class DockableTab_Main extends Application {
 	public void start (Stage primaryStage) {
 
 		DockablePane root = new DockablePane(primaryStage);
-		DockableTab tab = new DockableTab("aaa");
-		DockableTab tab2 = new DockableTab("bbb");
 		DockableTabPane tabPane = new DockableTabPane(root.rootGroupProperty().get());
-		tabPane.insertTab(tab);
-		tabPane.insertTab(tab2);
+		tabPane.insertTab(new DockableTab("aaa"));
+		tabPane.insertTab(new DockableTab("bbb"));
+		tabPane.insertTab(new DockableTab("ccc"));
+		tabPane.insertTab(new DockableTab("ddd"));
+		tabPane.insertTab(new DockableTab("eee"));
+		tabPane.insertTab(new DockableTab("fff"));
+		tabPane.insertTab(new DockableTab("ggg"));
+		tabPane.insertTab(new DockableTab("hhh"));
+		tabPane.insertTab(new DockableTab("iii"));
+		tabPane.insertTab(new DockableTab("jjj"));
+		tabPane.insertTab(new DockableTab("kkk"));
 		root.rootGroupProperty().get().add(tabPane);
-		DockableTabPane tabPane2 = new DockableTabPane(root.rootGroupProperty().get());
-		DockableTab tab3 = new DockableTab("ccc");
-		tabPane2.insertTab(tab3);
-		root.rootGroupProperty().get().add(tabPane2);
 
-		Scene scene = new Scene(root, 300, 250);
+		Scene scene = new Scene(root, 500, 500);
 
 		primaryStage.setTitle("Hello World!");
 		primaryStage.setScene(scene);

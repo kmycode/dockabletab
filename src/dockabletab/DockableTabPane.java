@@ -15,10 +15,8 @@ package dockabletab;
 
 import com.sun.javafx.scene.control.skin.LabeledText;
 import java.awt.Rectangle;
-import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.MouseEvent;
@@ -61,15 +59,23 @@ public class DockableTabPane extends TabPane {
 		Point2D pos = this.parent.getPosition();
 		double x = pos.getX();
 		double y = pos.getY();
-		for (Node node : this.parent.getTabPaneItems()) {
+		outside:
+		for (Node node : this.parent.getRootPane().getItems()) {
 			if (node != this) {
-				if (node instanceof Control) {
-					if (this.parent.getOrientation() == Orientation.VERTICAL) {
-						y += ((Control) node).getHeight();
+				y = 0;
+
+				// VerticalなSplitPane
+				if (node instanceof DockableAreaGroupPane) {
+					DockableAreaGroupPane pane = (DockableAreaGroupPane) node;
+					for (DockableTabPane tabPane : pane.getTabPaneList()) {
+						if (tabPane != this) {
+							y += tabPane.getHeight();
+						}
+						else {
+							break outside;
+						}
 					}
-					else {
-						x += ((Control) node).getWidth();
-					}
+					x += pane.getWidth();
 				}
 			}
 			else {
@@ -78,6 +84,7 @@ public class DockableTabPane extends TabPane {
 		}
 		double w = this.getWidth();
 		double h = this.getHeight();
+		//System.out.println("x:" + x + "  y:" + y + "  w:" + w + "  h:" + h);
 		Rectangle rect = new Rectangle();
 		rect.x = (int) x;
 		rect.y = (int) y;
