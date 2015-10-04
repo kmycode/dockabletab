@@ -61,7 +61,7 @@ public class DockableTabPane extends TabPane {
 		Point2D pos = this.parent.getPosition();
 		double x = pos.getX();
 		double y = pos.getY();
-		for (Node node : this.parent.getItems()) {
+		for (Node node : this.parent.getTabPaneItems()) {
 			if (node != this) {
 				if (node instanceof Control) {
 					if (this.parent.getOrientation() == Orientation.VERTICAL) {
@@ -229,8 +229,10 @@ public class DockableTabPane extends TabPane {
 		// ドッキング方向が指定されていれば、新しいパネルを作る
 		if (direction != DockingDirection.NONE) {
 			DockableTab currentTab = this.cutTab();
-			this.parent.moveTab(direction, currentTab);
-			currentTab.getTabPane().getSelectionModel().select(currentTab);
+			if (currentTab != null) {
+				this.parent.moveTab(direction, currentTab);
+				currentTab.getTabPane().getSelectionModel().select(currentTab);
+			}
 		}
 	}
 

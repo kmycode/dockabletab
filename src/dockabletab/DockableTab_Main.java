@@ -25,6 +25,10 @@ public class DockableTab_Main extends Application {
 		tabPane.insertTab(tab);
 		tabPane.insertTab(tab2);
 		root.rootGroupProperty().get().add(tabPane);
+		DockableTabPane tabPane2 = new DockableTabPane(root.rootGroupProperty().get());
+		DockableTab tab3 = new DockableTab("ccc");
+		tabPane2.insertTab(tab3);
+		root.rootGroupProperty().get().add(tabPane2);
 
 		Scene scene = new Scene(root, 300, 250);
 
