@@ -13,11 +13,18 @@
  */
 package dockabletab;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Tab;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 /**
@@ -27,12 +34,14 @@ import javafx.stage.Window;
  */
 public class DockablePane extends AnchorPane {
 
-	private ObjectProperty<DockableAreaGroupPane> rootGroup;
+	private ObjectProperty<DockableAreaGroupPane> rootGroup = new SimpleObjectProperty<>();
 	private Window parent;
+	private Stage window;
+	private DockablePane mainPane;
+	private List<DockablePane> childPane = new LinkedList<>();
 
 	public DockablePane (Window parent) {
 		this.parent = parent;
-		this.rootGroup = new SimpleObjectProperty<>();
 		this.rootGroup.addListener((obj) -> {
 			DockablePane.this.getChildren().clear();
 			DockablePane.this.getChildren().add(this.rootGroup.get());
@@ -42,6 +51,28 @@ public class DockablePane extends AnchorPane {
 		AnchorPane.setLeftAnchor(rootGroup.get(), 0.0);
 		AnchorPane.setRightAnchor(rootGroup.get(), 0.0);
 		AnchorPane.setBottomAnchor(rootGroup.get(), 0.0);
+
+		this.mainPane = this;
+	}
+
+	DockablePane (DockablePane mainPane, DockableAreaGroupPane groupPane, double x, double y, double w, double h) {
+		Stage floatingStage = new Stage();
+		Scene floatingScene = new Scene(this, w, h);
+		floatingStage.setScene(floatingScene);
+		floatingStage.setX(x);
+		floatingStage.setY(y);
+		floatingStage.initOwner(mainPane.getWindow());
+		floatingStage.show();
+		this.rootGroup.set(groupPane);
+		AnchorPane.setTopAnchor(rootGroup.get(), 0.0);
+		AnchorPane.setLeftAnchor(rootGroup.get(), 0.0);
+		AnchorPane.setRightAnchor(rootGroup.get(), 0.0);
+		AnchorPane.setBottomAnchor(rootGroup.get(), 0.0);
+
+		this.parent = mainPane.parent;
+		this.mainPane = mainPane;
+		this.mainPane.childPane.add(this);
+		this.window = floatingStage;
 	}
 
 	public ReadOnlyObjectProperty<DockableAreaGroupPane> rootGroupProperty () {
@@ -63,4 +94,54 @@ public class DockablePane extends AnchorPane {
 		return this.parent;
 	}
 
+	public DockablePane getMainPane () {
+		return this.mainPane;
+	}
+
+	public List<DockablePane> getChildPane () {
+		return this.childPane;
+	}
+
+	public List<DockableTabPane> getTabPaneList () {
+		List<DockableTabPane> result = new ArrayList<>();
+		for (DockablePane pane : this.mainPane.childPane) {
+			for (Node node : pane.getChildren()) {
+				if (node instanceof DockableAreaGroupPane) {
+					((DockableAreaGroupPane) node).getTabPaneList(result);
+				}
+			}
+		}
+		return result;
+	}
+
+	public List<DockableTab> getTabList () {
+		List<DockableTabPane> tabPaneList = this.getTabPaneList();
+		ArrayList<DockableTab> result = new ArrayList<>();
+		for (DockableTabPane tabPane : tabPaneList) {
+			for (Tab tab : tabPane.getTabs()) {
+				result.add((DockableTab) tab);
+			}
+		}
+		return result;
+	}
+
+	public boolean isEmpty () {
+		int count = 0;
+		for (Node node : this.getChildren()) {
+			if (node instanceof DockableAreaGroupPane) {
+				for (Node tabPaneNode : ((DockableAreaGroupPane) node).getTabPaneItems()) {
+					if (tabPaneNode instanceof DockableTabPane) {
+						count += ((DockableTabPane) tabPaneNode).getTabs().size();
+					}
+				}
+			}
+		}
+		return count == 0;
+	}
+
+	public void close () {
+		if (this.window != null) {
+			this.window.close();
+		}
+	}
 }
